@@ -8,16 +8,17 @@ cmd
 .option('--bn <val>', 'Num of Brokers', 1)
 .option('--wn <val>', 'Num of Workers (for each Broker)', 1)
 .option('--cn <val>', 'Num of Clients', 1)
+.option('--m <val>', 'Use memory cache (1=enabled|0=disabled) (default=0)', 0)
 .option('--p <val>', 'Num of messages (for each Client)', 100000);
 
 cmd.on('--help', function() {
   console.log('Examples:');
-  console.log('\tnode ' + cmd.name() + ' --bn 4 --wn 2 --cn 2 --p 40000');
+  console.log('\tnode ' + cmd.name() + ' --bn 4 --wn 2 --cn 2 --p 50000');
 });
 
 cmd.parse(process.argv);
 
-_.each(['bn', 'wn', 'cn', 'p'], function(k) {
+_.each(['bn', 'wn', 'cn', 'p', 'm'], function(k) {
   cmd[k] = +cmd[k];
 });
 
@@ -51,7 +52,9 @@ if (cluster.isMaster) {
     var b = (workerID % cmd.bn) + 1;
     var worker = new pigato.Worker('tcp://127.0.0.1:5555' + b, 'echo');
     worker.on('request', function(inp, res) {
-      res.opts.cache = 50000;
+      if (cmd.m) {
+        res.opts.cache = 50000;
+      }
       res.end(inp + 'FINAL');
     });
     worker.start();
