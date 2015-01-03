@@ -18,7 +18,11 @@ Performance tests for Pigato
     --bn <val>  Num of Brokers
     --wn <val>  Num of Workers (for each Broker)
     --cn <val>  Num of Clients
+    --m <val>   Use memory cache (1=enabled|0=disabled) (default=0)
     --p <val>   Num of messages (for each Client)
+
+Examples:
+	node perf --bn 4 --wn 2 --cn 2 --p 50000
 ```
 
 ######Examples
