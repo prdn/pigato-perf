@@ -2,7 +2,7 @@
   "name": "pigato-perf",
   "version": "0.0.2",
   "private": false,
-  "description": "Performance tests for Pigato",
+  "description": "Performance tests for PIGATO, a microservices framework for Node.js",
   "author": "prdn <paolo.ardoino@gmail.com> (http://ardoino.com/)",
   "keywords": [
     "pigato",
