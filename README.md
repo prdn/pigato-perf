@@ -1,7 +1,7 @@
 pigato-perf
 ===========
 
-Performance tests for Pigato
+Performance tests for [PIGATO](https://github.com/prdn/pigato), a microservices framework for Node.js
 
 ### INSTALL
 ```npm install```
