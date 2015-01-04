@@ -8,8 +8,8 @@ cmd
 .option('--bn <val>', 'Num of Brokers', 1)
 .option('--wn <val>', 'Num of Workers (for each Broker)', 1)
 .option('--cn <val>', 'Num of Clients', 1)
-.option('--m <val>', 'Use memory cache (1=enabled|0=disabled) (default=0)', 0)
-.option('--p <val>', 'Num of messages (for each Client)', 100000);
+.option('--p <val>', 'Num of messages (for each Client)', 100000)
+.option('--m <val>', 'Use memory cache (1=enabled|0=disabled) (default=0)', 0);
 
 cmd.on('--help', function() {
   console.log('Examples:');
@@ -25,6 +25,14 @@ _.each(['bn', 'wn', 'cn', 'p', 'm'], function(k) {
 var chunk = 'foo';
 
 if (cluster.isMaster) {
+  console.log("RUNNING CONF");
+  console.log("\t", [
+    cmd.bn + " brokers",
+    cmd.wn + " workers",
+    cmd.cn + " clients",
+    "cache " + (cmd.m ? 'on' : 'off'),
+    cmd.p + " requests"
+  ].join(", ")); 
   for (var i = 0; i < (cmd.bn + (cmd.bn * cmd.wn) + cmd.cn); i++) {
     cluster.fork();
   }
