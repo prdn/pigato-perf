@@ -51,14 +51,20 @@ if (cluster.isMaster) {
   var workerID = cluster.worker.workerID || cluster.worker.id;
   
   if (workerID <= cmd.bn) {
-    var broker = new pigato.Broker('tcp://*:7777' + workerID);
+    var broker = new pigato.Broker(
+      'tcp://*:7777' + workerID,
+      { cache: !!cmd.m }
+    );
     broker.start(function() {
       console.log("BROKER " + workerID);
     });
 
   } else if (workerID <= cmd.bn + (cmd.bn * cmd.wn)) {
     var b = (workerID % cmd.bn) + 1;
-    var worker = new pigato.Worker('tcp://127.0.0.1:7777' + b, 'echo');
+    var worker = new pigato.Worker(
+      'tcp://127.0.0.1:7777' + b, 'echo',
+      { concurrency: 10 }
+    );
     worker.on('request', function(inp, res) {
       if (cmd.m) {
         res.opts.cache = 50000;
