@@ -69,7 +69,9 @@ if (cluster.isMaster) {
       if (cmd.m) {
         res.opts.cache = 50000;
       }
-      res.end(inp + 'FINAL');
+      setImmediate(function() {
+        res.end(inp + 'FINAL');
+      });
     });
     worker.start();
     console.log("WORKER (BROKER " + b + ")");
@@ -122,6 +124,6 @@ if (cluster.isMaster) {
     setTimeout(function() {
       timer = process.hrtime();
       send();
-    }, 1000);
+    }, 2000);
   }
 }
