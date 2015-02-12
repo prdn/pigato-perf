@@ -69,9 +69,7 @@ if (cluster.isMaster) {
       if (cmd.m) {
         res.opts.cache = 50000;
       }
-      setImmediate(function() {
-        res.end(inp + 'FINAL');
-      });
+      res.end(inp + 'FINAL');
     });
     worker.start();
     console.log("WORKER (BROKER " + b + ")");
@@ -99,7 +97,9 @@ if (cluster.isMaster) {
       var dts = elapsed[0] + (elapsed[1] / 1000000000);
       console.log("CLIENT GOT answer", dts + " milliseconds. " + (cmd.p / dts).toFixed(2) + " requests/sec.");
       client.stop();
-      process.exit(-1);
+      setTimeout(function() {
+        process.exit(-1);
+      }, 1000);
     }
 
     function send() {
