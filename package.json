@@ -16,9 +16,9 @@
     "micro-services"
   ],
   "dependencies": {
-    "async": "~0.9.0",
+    "async": "",
     "commander": "",
-    "lodash": "~2.4.1",
+    "lodash": "",
     "pigato": ""
   },
   "engine": {
