@@ -39,7 +39,6 @@ if (cluster.isMaster) {
 
   var kills = 0;
   cluster.on('exit', function(worker, code, signal) {
-    console.log(code, signal, worker.id);
     kills++;
     if (kills === cmd.cn) {
       for (var id in cluster.workers) {
@@ -56,6 +55,8 @@ if (cluster.isMaster) {
       'tcp://*:7777' + workerID,
       { cache: !!cmd.m }
     );
+    broker.on('error', function(err) { console.log("broker", err); });
+  
     broker.start(function() {
       console.log("BROKER " + workerID);
     });
@@ -66,6 +67,9 @@ if (cluster.isMaster) {
       'tcp://127.0.0.1:7777' + b, 'echo',
       { concurrency: 10 }
     );
+
+    worker.on('error', function(err) { console.log("worker", err); });
+
     worker.on('request', function(inp, res) {
       if (cmd.m) {
         res.opts.cache = 50000;
@@ -74,6 +78,7 @@ if (cluster.isMaster) {
         res.end(inp + 'FINAL');
       });
     });
+
     worker.start();
     console.log("WORKER (BROKER " + b + ")");
 
