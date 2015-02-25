@@ -39,6 +39,7 @@ if (cluster.isMaster) {
 
   var kills = 0;
   cluster.on('exit', function(worker, code, signal) {
+    console.log(code, signal, worker.id);
     kills++;
     if (kills === cmd.cn) {
       for (var id in cluster.workers) {
@@ -69,7 +70,9 @@ if (cluster.isMaster) {
       if (cmd.m) {
         res.opts.cache = 50000;
       }
-      res.end(inp + 'FINAL');
+      setImmediate(function() {
+        res.end(inp + 'FINAL');
+      });
     });
     worker.start();
     console.log("WORKER (BROKER " + b + ")");
