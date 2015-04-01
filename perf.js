@@ -97,13 +97,14 @@ if (cluster.isMaster) {
       console.log(err);       
     });
 
-    var timer;
+    var d1;
     var rcnt = 0;
 
     function done() {
-      var elapsed = process.hrtime(timer);
-      var dts = elapsed[0] + (elapsed[1] / 1000000000);
-      console.log("CLIENT GOT answer", dts + " milliseconds. " + (cmd.p / dts).toFixed(2) + " requests/sec.");
+      var d2 = new Date();
+      var hmany = d2.getTime() - d1.getTime();
+       
+      console.log("CLIENT GOT answer", hmany + " milliseconds. " + (cmd.p / (hmany / 1000)).toFixed(2) + " requests/sec.");
       client.stop();
       setTimeout(function() {
         process.exit(-1);
@@ -130,7 +131,7 @@ if (cluster.isMaster) {
     }
 
     setTimeout(function() {
-      timer = process.hrtime();
+      d1 = new Date();
       send();
     }, 2000);
   }
