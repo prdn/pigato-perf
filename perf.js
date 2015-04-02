@@ -8,7 +8,7 @@ cmd
 .option('--bn <val>', 'Num of Brokers', 1)
 .option('--wn <val>', 'Num of Workers (for each Broker)', 1)
 .option('--cn <val>', 'Num of Clients', 1)
-.option('--p <val>', 'Num of messages (for each Client)', 100000)
+.option('--p <val>', 'Num of messages (for each Client)', 50000)
 .option('--m <val>', 'Use memory cache (1=enabled|0=disabled) (default=0)', 0);
 
 cmd.on('--help', function() {
@@ -65,14 +65,14 @@ if (cluster.isMaster) {
     var b = (workerID % cmd.bn) + 1;
     var worker = new pigato.Worker(
       'tcp://127.0.0.1:7777' + b, 'echo',
-      { concurrency: 10 }
+      { concurrency: 100 }
     );
 
     worker.on('error', function(err) { console.log("worker", err); });
 
     worker.on('request', function(inp, res) {
       if (cmd.m) {
-        res.opts.cache = 50000;
+        res.opts.cache = 100000;
       }
       setImmediate(function() {
         res.end(inp + 'FINAL');
@@ -114,7 +114,7 @@ if (cluster.isMaster) {
     function send() {
       for (var k = 0; k < cmd.p; k++) {
         client.request(
-          'echo', chunk + (k % 1000),
+          'echo', chunk,
           { timeout: -1 }
         )
         .on('data', function() {})
