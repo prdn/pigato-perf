@@ -7,7 +7,7 @@ var cmd = require('commander');
 cmd
 .option('--bn <val>', 'Num of Brokers', 1)
 .option('--wn <val>', 'Num of Workers (for each Broker)', 1)
-.option('--cn <val>', 'Num of Clients', 1)
+.option('--cn <val>', 'Num of Clients (for each Broker)', 1)
 .option('--p <val>', 'Num of messages (for each Client)', 50000)
 .option('--m <val>', 'Use memory cache (1=enabled|0=disabled) (default=0)', 0);
 
@@ -33,7 +33,7 @@ if (cluster.isMaster) {
     "cache " + (cmd.m ? 'on' : 'off'),
     cmd.p + " requests"
   ].join(", ")); 
-  for (var i = 0; i < (cmd.bn + (cmd.bn * cmd.wn) + cmd.cn); i++) {
+  for (var i = 0; i < (cmd.bn + (cmd.bn * cmd.wn) + (cmd.bn * cmd.cn)); i++) {
     cluster.fork();
   }
 
@@ -41,31 +41,29 @@ if (cluster.isMaster) {
   cluster.on('exit', function(worker, code, signal) {
     kills++;
     if (kills === cmd.cn) {
-      for (var id in cluster.workers) {
-        cluster.workers[id].kill();
-      }
+      process.exit(0);
     }
   });
 } else {
 
-  var workerID = cluster.worker.workerID || cluster.worker.id;
+  var processID = cluster.worker.processID || cluster.worker.id;
   
-  if (workerID <= cmd.bn) {
+  if (processID <= cmd.bn) {
     var broker = new pigato.Broker(
-      'tcp://*:7777' + workerID,
+      'tcp://*:7777' + processID,
       { cache: !!cmd.m }
     );
     broker.on('error', function(err) { console.log("broker", err); });
   
     broker.start(function() {
-      console.log("BROKER " + workerID);
+      console.log("BROKER " + processID);
     });
 
-  } else if (workerID <= cmd.bn + (cmd.bn * cmd.wn)) {
-    var b = (workerID % cmd.bn) + 1;
+  } else if (processID <= cmd.bn + (cmd.bn * cmd.wn)) {
+    var b = (processID % cmd.bn) + 1;
     var worker = new pigato.Worker(
       'tcp://127.0.0.1:7777' + b, 'echo',
-      { concurrency: 100 }
+      { concurrency: -1 }
     );
 
     worker.on('error', function(err) { console.log("worker", err); });
@@ -83,19 +81,21 @@ if (cluster.isMaster) {
     console.log("WORKER (BROKER " + b + ")");
 
   } else {
-    var bs = [];
-    
-    for (var i = 0; i < cmd.bn; i++) {
-      bs.push('tcp://127.0.0.1:7777' + (i + 1));
-    }
+    var b = (processID % cmd.bn) + 1;
+    var client = new pigato.Client('tcp://127.0.0.1:7777' + b);
+    console.log("CLIENT (" + cmd.p + " reqs) (BROKER " + b + ")");
 
-    var client = new pigato.Client(bs);
-    client.start();
-    console.log("CLIENT (" + cmd.p + " reqs)");
-
-    client.on('error', function(err) {
+    client.on('connect', function() {
+      console.log('connected');
+    })
+    .on('disconnect', function() {
+      console.log('disconnected');
+    })
+    .on('error', function(err) {
       console.log(err);       
     });
+
+    client.start();
 
     var d1;
     var rcnt = 0;
@@ -107,7 +107,7 @@ if (cluster.isMaster) {
       console.log("CLIENT GOT answer", hmany + " milliseconds. " + (cmd.p / (hmany / 1000)).toFixed(2) + " requests/sec.");
       client.stop();
       setTimeout(function() {
-        process.exit(-1);
+        process.exit(0);
       }, 1000);
     }
 
