@@ -9,7 +9,8 @@ cmd
 .option('--wn <val>', 'Num of Workers (for each Broker)', 1)
 .option('--cn <val>', 'Num of Clients (for each Broker)', 1)
 .option('--p <val>', 'Num of messages (for each Client)', 50000)
-.option('--m <val>', 'Use memory cache (1=enabled|0=disabled) (default=0)', 0);
+.option('--m <val>', 'Use memory cache (1=enabled|0=disabled) (default=0)', 0)
+.option('--s <val>', 'Num of waves (default=1)', 1);
 
 cmd.on('--help', function() {
   console.log('Examples:');
@@ -18,7 +19,7 @@ cmd.on('--help', function() {
 
 cmd.parse(process.argv);
 
-_.each(['bn', 'wn', 'cn', 'p', 'm'], function(k) {
+_.each(['bn', 'wn', 'cn', 'p', 'm', 's'], function(k) {
   cmd[k] = +cmd[k];
 });
 
@@ -83,7 +84,11 @@ if (cluster.isMaster) {
   } else {
     var b = (processID % cmd.bn) + 1;
     var client = new pigato.Client('tcp://127.0.0.1:7777' + b);
-    console.log("CLIENT (" + cmd.p + " reqs) (BROKER " + b + ")");
+    
+    var sn = 0;
+    var tp = cmd.p * cmd.s;
+    
+    console.log("CLIENT (" + tp + " reqs/" + cmd.s + " waves) (BROKER " + b + ")");
 
     client.on('connect', function() {
       console.log('connected');
@@ -104,7 +109,7 @@ if (cluster.isMaster) {
       var d2 = new Date();
       var hmany = d2.getTime() - d1.getTime();
        
-      console.log("CLIENT GOT answer", hmany + " milliseconds. " + (cmd.p / (hmany / 1000)).toFixed(2) + " requests/sec.");
+      console.log("CLIENT GOT answer", hmany + " milliseconds. " + (tp / (hmany / 1000)).toFixed(2) + " requests/sec.");
       client.stop();
       setTimeout(function() {
         process.exit(0);
@@ -112,6 +117,9 @@ if (cluster.isMaster) {
     }
 
     function send() {
+      var prcnt = 0;
+      sn++;
+      console.log("C/" + processID + ": WAVE=" + sn);
       for (var k = 0; k < cmd.p; k++) {
         client.request(
           'echo', chunk,
@@ -120,8 +128,14 @@ if (cluster.isMaster) {
         .on('data', function() {})
         .on('end', function() {
           rcnt++;
+          prcnt++;
+          
+          if (prcnt === cmd.p && sn < cmd.s) {
+            send();
+            return;
+          }
 
-          if (rcnt < cmd.p) {
+          if (rcnt < tp) {
             return;
           }
 
