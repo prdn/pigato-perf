@@ -63,7 +63,7 @@ if (cluster.isMaster) {
     var b = (processID % cmd.bn) + 1;
     var worker = new pigato.Worker(
       'tcp://127.0.0.1:7777' + b, 'echo',
-      { concurrency: -1 }
+      { concurrency: 100 }
     );
 
     worker.on('error', function(err) { console.log("worker", err); });
