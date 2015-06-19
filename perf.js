@@ -44,7 +44,7 @@ if (cluster.isMaster) {
   var kills = 0;
   cluster.on('exit', function(worker, code, signal) {
     kills++;
-    if (kills === cmd.cn) {
+    if (kills === (cmd.cn * cmd.bn)) {
       process.exit(0);
     }
   });
@@ -55,9 +55,9 @@ if (cluster.isMaster) {
 };
 
 
-function fork( ID ){ 
-  if( !cmd['nofork'] && ID ){
-    return  cluster.fork();
+function fork(ID){ 
+  if(!cmd['nofork'] && ID){
+    return cluster.fork();
   } 
 
   setImmediate(function() { 
@@ -68,25 +68,31 @@ function fork( ID ){
         cmd.e + processID,
         { cache: !!cmd.m }
       );
-      broker.on('error', function(err) { console.log("broker", err); });
+
+      broker.on('error', function(err) { 
+        console.log("broker", err); 
+      });
 
       broker.start(function() {
-        console.log("BROKER " + processID);
+        console.log('BROKER ' + processID);
       });
 
     } else if (processID <= cmd.bn + (cmd.bn * cmd.wn)) {
       var b = (processID % cmd.bn) + 1;
       var worker = new pigato.Worker(
         cmd.e + b, 'echo',
-        { concurrency: 100 }
+        { concurrency: 1000 }
       );
 
-      worker.on('error', function(err) { console.log("worker", err); });
+      worker.on('error', function(err) { 
+        console.log("worker", err); 
+     });
 
       worker.on('request', function(inp, res) {
         if (cmd.m) {
           res.opts.cache = 100000;
         }
+
         setImmediate(function() {
           res.end(inp + 'FINAL');
         });
@@ -126,14 +132,16 @@ function fork( ID ){
         console.log("CLIENT GOT answer", hmany + " milliseconds. " + (tp / (hmany / 1000)).toFixed(2) + " requests/sec.");
         client.stop();
         setTimeout(function() {
-          process.exit(0);
+          cluster.worker.kill();
         }, 1000);
       }
 
       function send() {
         var prcnt = 0;
         sn++;
+
         console.log("C/" + processID + ": WAVE=" + sn);
+
         for (var k = 0; k < cmd.p; k++) {
           client.request(
             'echo', chunk,
