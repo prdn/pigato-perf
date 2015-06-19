@@ -24,9 +24,6 @@ Performance tests for [PIGATO](https://github.com/prdn/pigato), a microservices 
     --s <val>     Num of waves (default=1)
     --e <val>     Num of waves (default=tcp://127.0.0.1:7777)
     -N, --nofork  Don't use fork
-
-Examples:
-	node perf --bn 2 --wn 2 --cn 2 --p 50000
 ```
 
 ######Examples
